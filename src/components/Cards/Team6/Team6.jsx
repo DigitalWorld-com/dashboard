@@ -11,7 +11,7 @@ export const Team6 = () => {
 
   useEffect(() => {
     const llamada = async () => {
-      let response = await fetch('http://localhost:8080/api/greeting');
+      let response = await fetch('http://localhost:8086/api/SaludoTeam6');
       let data = await response.text();
       setRespuesa(data);
     };
