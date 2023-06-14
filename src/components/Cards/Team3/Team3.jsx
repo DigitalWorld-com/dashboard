@@ -11,7 +11,7 @@ export const Team3 = () => {
 
   useEffect(() => {
     const llamada = async () => {
-      let response = await fetch('http://localhost:8080/api/greeting');
+      let response = await fetch('http://localhost:8083/api3/greeting');
       let data = await response.text();
       setRespuesa(data);
     };
@@ -39,7 +39,7 @@ export const Team3 = () => {
           {/* Aqui van la interfaz front dependiendo de la funcionalidad, en caso de que necesiten ayuda con esta parte porfavor avisarme (German).*/}
           <form className="my-form">
             <div className="boxInput">
-              <label htmlFor="campo1">Campo 1</label>
+              <label htmlFor="campo1">{respuesta}</label>
               <input type="text" id="campo1" />
             </div>
             <div className="boxInput">
