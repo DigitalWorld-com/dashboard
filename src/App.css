@@ -17,3 +17,9 @@
   border-radius: 20px;
   padding: 10px;
 }
+
+.modal-content {
+  border: 2px solid;
+  resize: both;
+  overflow: auto;
+}
