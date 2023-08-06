@@ -13,7 +13,7 @@ export const Team5 = () => {
     setShowHistoricalModal(show); 
     setSearchCoin(show);
     if(!show){
-      setCoinText("");
+      setCoinText('');
       setHistory([]);
     }
   };
@@ -28,11 +28,15 @@ export const Team5 = () => {
   const [editId, setEditId] = useState(undefined);
   const [editData, setEditData] = useState('');
   const editConversion = (id) => {
+    setMessage('');
     setEditId(id);
     setShowEditModal(true);
   };
   const [saveEditedData, setSaveEditedData] = useState(false);
   const [deleteId, setDeleteId] = useState(0);
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
+  const [userData, setUserData] = useState({user: '', password: ''});
 
   useEffect(() => {
     const llamada = async () => {
@@ -76,20 +80,26 @@ export const Team5 = () => {
             console.log('Failed to retrieve conversion data');
           }
         }
-        if(saveEditedData){
+        if(saveEditedData && editId!=0){
           const conversionRequest = {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
+            },
             body: JSON.stringify(editData)
           };
           const conversionUpdate = await fetch('http://localhost:8085/convert/conversion', conversionRequest);
           if (conversionUpdate.ok) {
             setShowEditModal(false);
-            setSaveEditedData(false);
             setSearchCoin(true);
+          } else if(conversionUpdate.status == 401 || conversionUpdate.status == 403){
+            setEditId(0);
+            setMessage('No tiene permisos para actualizar');
           } else {
-            console.log('Failed to update conversion data');
+            console.log('Failed to update conversion data. Status ' + conversionUpdate.status);
           }
+          setSaveEditedData(false);
         }
         if(searchCoin){
           const historicalData = await fetch('http://localhost:8085/convert/allconversions?text='+coinText);
@@ -109,14 +119,22 @@ export const Team5 = () => {
         if(deleteId != 0){
           const conversionRequest = {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
+           }
           };
           const deleteConversion = await fetch('http://localhost:8085/convert/delete/'+deleteId, conversionRequest);
           if(deleteConversion.status == 204){
-            setDeleteId(0);
             setSearchCoin(true);
+          } else if(deleteConversion.status == 401 || deleteConversion.status == 403){
+            setMessage('No tiene permisos para borrar');
+          } else{
+            console.log('Failed to delete conversion data. Status ' + deleteConversion.status);
           }
+          setDeleteId(0);
         }
+        if(message.length>0){setShowMessage(true);}
       } catch (error) {
         console.error('Error:', error);
       }
@@ -184,24 +202,17 @@ export const Team5 = () => {
           <Modal.Title>Configuracion</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {/* Aqui van la interfaz front dependiendo de la funcionalidad, en caso de que necesiten ayuda con esta parte porfavor avisarme (German).*/}
           <form className="my-form">
             <div className="boxInput">
-              <label htmlFor="campo1">Campo 1</label>
-              <input type="text" id="campo1" />
+              <label htmlFor="campo1">Usuario</label>
+              <input type="text" id="campo1" value={userData.user} onChange={(e) => setUserData(prevData => ({...prevData, user: e.target.value}))} />
             </div>
             <div className="boxInput">
-              <label htmlFor="campo2">Campo 2</label>
-              <input type="text" id="campo2" />
+              <label htmlFor="campo2">Password</label>
+              <input type="password" id="campo2" value={userData.password} onChange={(e) => setUserData(prevData => ({...prevData, password: e.target.value}))} />
             </div>
-            <div className="boxInput">
-              <label htmlFor="campo3">Campo 3</label>
-              <input type="text" id="campo3" />
-            </div>
-            <button>Enviar</button>
           </form>
-          {/* Este form es solo para ejemplificar, como mencione, se puede cambiar dependediendo del proyecto */}
-        </Modal.Body>
+          </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseSettingModal}>
             Close
@@ -215,8 +226,8 @@ export const Team5 = () => {
         </Modal.Header>
         <Modal.Body>
           <div className="boxInput">
-            <label htmlFor="campo4">Moneda</label>
-            <input type="text" id="campo4" onChange={(e)=>{setCoinText(e.target.value);}} />
+            <label htmlFor="campo3">Moneda</label>
+            <input type="text" id="campo3" onChange={(e)=>{setCoinText(e.target.value);}} />
             <FontAwesomeIcon
               className="fw-bold fs-5 position-absolute"
               style={{ right: '2rem', cursor: 'pointer' }}
@@ -259,7 +270,7 @@ export const Team5 = () => {
                     <FontAwesomeIcon
                       style={{ cursor: 'pointer' }}
                       icon={faTrashCan}
-                      onClick={() => setDeleteId(item.id)}
+                      onClick={() => {setDeleteId(item.id); setMessage('')}}
                     ></FontAwesomeIcon>
                   </td>
                 </tr>
@@ -276,37 +287,39 @@ export const Team5 = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} >
+      <Modal show={showEditModal} onHide={() => {setShowEditModal(false); setMessage('');}} >
         <Modal.Header closeButton>
           <Modal.Title>Editar Conversión</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <span>Id {editData.id}<br/></span>
           <span>Moneda {editData.coinName}<br/></span>
-          <div className="boxInput">
-            <label htmlFor="editCampo1">Precio</label>
-            <input type="text" id="editCampo1" value={editData.coinPrice} onChange={(e) => setEditData(prevData => ({...prevData, coinPrice: e.target.value})) } />
-          </div>
-          <div className="boxInput">
-            <label htmlFor="editCampo2">Compra Oficial</label>
-            <input type="text" id="editCampo2" value={editData.officialBuyPrice} onChange={(e) => setEditData(prevData => ({...prevData, officialBuyPrice: e.target.value})) } />
-          </div>
-          <div className="boxInput">
-            <label htmlFor="editCampo3">Venta Oficial</label>
-            <input type="text" id="editCampo3" value={editData.officialSellPrice} onChange={(e) => setEditData(prevData => ({...prevData, officialSellPrice: e.target.value})) } />
-          </div>
-          <div className="boxInput">
-            <label htmlFor="editCampo4">Compra Blue</label>
-            <input type="text" id="editCampo4" value={editData.blueBuyPrice} onChange={(e) => setEditData(prevData => ({...prevData, blueBuyPrice: e.target.value})) } />
-          </div>
-          <div className="boxInput">
-            <label htmlFor="editCampo5">Venta Blue</label>
-            <input type="text" id="editCampo5" value={editData.blueSellPrice} onChange={(e) => setEditData(prevData => ({...prevData, blueSellPrice: e.target.value})) } />
-          </div>
-          <span>Fecha {editData.dateCreated}<br/></span>
+          <form className="my-form">
+            <div className="boxInput">
+              <label htmlFor="editCampo1">Precio</label>
+              <input type="number" id="editCampo1" value={editData.coinPrice} onChange={(e) => setEditData(prevData => ({...prevData, coinPrice: e.target.value})) } />
+            </div>
+            <div className="boxInput">
+              <label htmlFor="editCampo2">Compra Oficial</label>
+              <input type="number" id="editCampo2" value={editData.officialBuyPrice} onChange={(e) => setEditData(prevData => ({...prevData, officialBuyPrice: e.target.value})) } />
+            </div>
+            <div className="boxInput">
+              <label htmlFor="editCampo3">Venta Oficial</label>
+              <input type="number" id="editCampo3" value={editData.officialSellPrice} onChange={(e) => setEditData(prevData => ({...prevData, officialSellPrice: e.target.value})) } />
+            </div>
+            <div className="boxInput">
+              <label htmlFor="editCampo4">Compra Blue</label>
+              <input type="number" id="editCampo4" value={editData.blueBuyPrice} onChange={(e) => setEditData(prevData => ({...prevData, blueBuyPrice: e.target.value})) } />
+            </div>
+            <div className="boxInput">
+              <label htmlFor="editCampo5">Venta Blue</label>
+              <input type="number" id="editCampo5" value={editData.blueSellPrice} onChange={(e) => setEditData(prevData => ({...prevData, blueSellPrice: e.target.value})) } />
+            </div>
+            <span>Fecha {editData.dateCreated}<br/></span>
+          </form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+          <Button variant="secondary" onClick={() => {setShowEditModal(false); setMessage('');}}>
             Close
           </Button>
           <Button variant="primary" onClick={() => setSaveEditedData(true)}>
@@ -315,6 +328,14 @@ export const Team5 = () => {
         </Modal.Footer>
       </Modal>
 
+      <Modal show={showMessage} onHide={() => {setShowMessage(false); setMessage('');}}>
+        <Modal.Header closeButton>
+        <Modal.Title>Mensaje</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {message}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
