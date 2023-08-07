@@ -351,7 +351,7 @@ export const Team5 = () => {
           {dolarOficial}<br/>
           {dolarBlue}
           <div className="boxInput">
-            <label htmlFor="campo5">Pesos</label>
+            <label htmlFor="campo5">Dolares</label>
             <input type="number" id="campo5" value={convertPesos} onChange={(e) => setConvertPesos(e.target.value)} />
           </div>
           <h5>Conversión</h5>
