@@ -166,6 +166,10 @@ export const Team5 = () => {
     <span>{coin} {dolar.blueName}: Compra ${conversion.blueBuyPrice} - Venta ${conversion.blueSellPrice}</span>
     : "";
 
+  const officialDollarConverted = dolar ? <span>{dolar.officialName}: Compra ${dolar.officialBuyPrice * convertPesos} - Venta ${dolar.officialSellPrice * convertPesos}</span> : '';
+  const blueDollarConverted = dolar ? <span>{dolar.blueName}: Compra ${dolar.blueBuyPrice * convertPesos} - Venta ${dolar.blueSellPrice * convertPesos}</span> : '';
+
+
   return (
     <div className="card">
       <FontAwesomeIcon
@@ -351,13 +355,8 @@ export const Team5 = () => {
             <input type="number" id="campo5" value={convertPesos} onChange={(e) => setConvertPesos(e.target.value)} />
           </div>
           <h5>Conversión</h5>
-          <span>
-            {dolar.officialName}: Compra ${dolar.officialBuyPrice * convertPesos} - Venta ${dolar.officialSellPrice * convertPesos}
-          </span>
-          <br/>
-          <span>
-            {dolar.blueName}: Compra ${dolar.blueBuyPrice * convertPesos} - Venta ${dolar.blueSellPrice * convertPesos}
-          </span>
+          {officialDollarConverted}<br/>
+          {blueDollarConverted}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => {setShowConvertPesos(false);}}>
