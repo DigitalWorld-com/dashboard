@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal, Table } from 'react-bootstrap';
-import { faSliders, faClockRotateLeft, faRefresh, faSearch, faPencil, faTrashCan } 
+import { faSliders, faClockRotateLeft, faRefresh, faSearch, faPencil, faTrashCan, faMoneyBillTransfer } 
  from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -37,122 +37,127 @@ export const Team5 = () => {
   const [message, setMessage] = useState('');
   const [showMessage, setShowMessage] = useState(false);
   const [userData, setUserData] = useState({user: '', password: ''});
+  const [showConvertPesos, setShowConvertPesos] = useState(false);
+  const [convertPesos, setConvertPesos] = useState(1);
 
   useEffect(() => {
     const llamada = async () => {
       try {
-        if(!respuesta && !dolar){
-          const response = await fetch('http://localhost:8085/crypto/crypto-price?ids='+coin.toLowerCase());        
-          if (response.ok) {
-            const data = await response.json();
-            setRespuesta(data);
-          } else {
-            console.log('Failed to retrieve cryptocurrency prices');
+        if(!showConvertPesos){
+          let nonPermissionStatus = [401, 403];
+          if(!respuesta && !dolar){
+            const response = await fetch('http://localhost:8085/crypto/crypto-price?ids='+coin.toLowerCase());        
+            if (response.ok) {
+              const data = await response.json();
+              setRespuesta(data);
+            } else {
+              console.log('Failed to retrieve cryptocurrency prices');
+            }
           }
-        }
-        if(!dolar && respuesta != undefined){
-          const dolarData = await fetch('http://localhost:8085/dollar/data');
-          if (dolarData.ok) {
-            const data = await dolarData.json();
-            setDolar(data);
-          } else {
-            console.log('Failed to retrieve dollar data');
+          if(!dolar && respuesta != undefined){
+            const dolarData = await fetch('http://localhost:8085/dollar/data');
+            if (dolarData.ok) {
+              const data = await dolarData.json();
+              setDolar(data);
+            } else {
+              console.log('Failed to retrieve dollar data');
+            }
           }
-        }
-        if(!conversion && respuesta != undefined && dolar != undefined){
-          const conversionRequest = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              coinName: coin,
-              coinPrice: respuesta.price,
-              officialBuyPrice: dolar.officialBuyPrice,
-              officialSellPrice: dolar.officialSellPrice,
-              blueBuyPrice: dolar.blueBuyPrice,
-              blueSellPrice: dolar.blueSellPrice
-            })
-          };
-          const conversionData = await fetch('http://localhost:8085/convert/dollar-pesos', conversionRequest);
-          if (conversionData.ok) {
-            const data = await conversionData.json();
-            setConversion(data);
-          } else {
-            console.log('Failed to retrieve conversion data');
+          if(!conversion && respuesta != undefined && dolar != undefined){
+            const conversionRequest = {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                coinName: coin,
+                coinPrice: respuesta.price,
+                officialBuyPrice: dolar.officialBuyPrice,
+                officialSellPrice: dolar.officialSellPrice,
+                blueBuyPrice: dolar.blueBuyPrice,
+                blueSellPrice: dolar.blueSellPrice
+              })
+            };
+            const conversionData = await fetch('http://localhost:8085/convert/dollar-pesos', conversionRequest);
+            if (conversionData.ok) {
+              const data = await conversionData.json();
+              setConversion(data);
+            } else {
+              console.log('Failed to retrieve conversion data');
+            }
           }
-        }
-        if(saveEditedData && editId!=0){
-          const conversionRequest = {
-            method: 'PUT',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
-            },
-            body: JSON.stringify(editData)
-          };
-          const conversionUpdate = await fetch('http://localhost:8085/convert/conversion', conversionRequest);
-          if (conversionUpdate.ok) {
-            setShowEditModal(false);
-            setSearchCoin(true);
-          } else if(conversionUpdate.status == 401 || conversionUpdate.status == 403){
-            setEditId(0);
-            setMessage('No tiene permisos para actualizar');
-          } else {
-            console.log('Failed to update conversion data. Status ' + conversionUpdate.status);
+          if(saveEditedData && editId!=0){
+            const conversionRequest = {
+              method: 'PUT',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
+              },
+              body: JSON.stringify(editData)
+            };
+            const conversionUpdate = await fetch('http://localhost:8085/convert/conversion', conversionRequest);
+            if (conversionUpdate.ok) {
+              setShowEditModal(false);
+              setSearchCoin(true);
+            } else if(nonPermissionStatus.includes(conversionUpdate.status)){
+              setEditId(0);
+              setMessage('No tiene permisos para actualizar');
+            } else {
+              console.log('Failed to update conversion data. Status ' + conversionUpdate.status);
+            }
+            setSaveEditedData(false);
           }
-          setSaveEditedData(false);
-        }
-        if(searchCoin){
-          const historicalData = await fetch('http://localhost:8085/convert/allconversions?text='+coinText);
-          if (historicalData.ok) {
-            const data = await historicalData.json();
-            setHistory(data);
-            setSearchCoin(false);
+          if(searchCoin){
+            const historicalData = await fetch('http://localhost:8085/convert/allconversions?text='+coinText);
+            if (historicalData.ok) {
+              const data = await historicalData.json();
+              setHistory(data);
+              setSearchCoin(false);
+            }
           }
-        }
-        if(editId && deleteId==0 && showEditModal && !saveEditedData){
-          const conversionData = await fetch('http://localhost:8085/convert/conversion/'+editId);
-          if (conversionData.ok) {
-            const data = await conversionData.json();
-            setEditData(data);
+          if(editId && deleteId==0 && showEditModal && !saveEditedData){
+            const conversionData = await fetch('http://localhost:8085/convert/conversion/'+editId);
+            if (conversionData.ok) {
+              const data = await conversionData.json();
+              setEditData(data);
+            }
           }
-        }
-        if(deleteId != 0){
-          const conversionRequest = {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
-           }
-          };
-          const deleteConversion = await fetch('http://localhost:8085/convert/delete/'+deleteId, conversionRequest);
-          if(deleteConversion.status == 204){
-            setSearchCoin(true);
-          } else if(deleteConversion.status == 401 || deleteConversion.status == 403){
-            setMessage('No tiene permisos para borrar');
-          } else{
-            console.log('Failed to delete conversion data. Status ' + deleteConversion.status);
+          if(deleteId != 0){
+            const conversionRequest = {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(userData.user + ':' + userData.password)
+            }
+            };
+            const deleteConversion = await fetch('http://localhost:8085/convert/delete/'+deleteId, conversionRequest);
+            if(deleteConversion.status == 204){
+              setSearchCoin(true);
+            } else if(nonPermissionStatus.includes(deleteConversion.status)){
+              setMessage('No tiene permisos para borrar');
+            } else{
+              console.log('Failed to delete conversion data. Status ' + deleteConversion.status);
+            }
+            setDeleteId(0);
           }
-          setDeleteId(0);
+          if(message.length>0){setShowMessage(true);}
         }
-        if(message.length>0){setShowMessage(true);}
       } catch (error) {
         console.error('Error:', error);
       }
     };
 
     llamada();
-  }, [respuesta, dolar, searchCoin, editId, saveEditedData, deleteId]);
+  }, [respuesta, dolar, searchCoin, editId, saveEditedData, deleteId, convertPesos]);
 
 
   const coinPrice = respuesta && respuesta.price ? " " + respuesta.currency + " $" + respuesta.price : "";
-  const dolarTitle = dolar ? <h4>Precio del Dolar</h4> : "";
+  const dolarTitle = dolar ? <h5>Precio del Dolar</h5> : "";
   const dolarOficial = dolar ?
     <span>{dolar.officialName}: Compra ${dolar.officialBuyPrice} - Venta ${dolar.officialSellPrice}</span>
     : "";
   const dolarBlue = dolar ?
     <span>{dolar.blueName}: Compra ${dolar.blueBuyPrice} - Venta ${dolar.blueSellPrice}</span>
     : "";
-  const conversionTitle = conversion ? <h4>Conversión a Pesos</h4> : "";
+  const conversionTitle = conversion ? <h5>Conversión a Pesos</h5> : "";
   const conversionOficial = conversion ?
     <span>{coin} {dolar.officialName}: Compra ${conversion.officialBuyPrice} - Venta $
     {conversion.officialSellPrice}</span>
@@ -165,9 +170,15 @@ export const Team5 = () => {
     <div className="card">
       <FontAwesomeIcon
         className="fw-bold fs-5 position-absolute"
-        style={{ right: '6rem', cursor: 'pointer' }}
+        style={{ right: '8rem', cursor: 'pointer' }}
         icon={faRefresh}
         onClick={() => {setConversion(undefined); setRespuesta(undefined); setDolar(undefined)}}
+      ></FontAwesomeIcon>
+      <FontAwesomeIcon
+        className="fw-bold fs-5 position-absolute"
+        style={{ right: '6rem', cursor: 'pointer' }}
+        icon={faMoneyBillTransfer}
+        onClick={() => {setShowConvertPesos(true);}}
       ></FontAwesomeIcon>
       <FontAwesomeIcon
         className="fw-bold fs-5 position-absolute"
@@ -196,7 +207,6 @@ export const Team5 = () => {
       {conversionOficial}
       {conversionBlue}
 
-      {/* MODAL EDITABLE PARA CADA TEAM */}
       <Modal show={showSettingModal} onHide={handleCloseSettingModal}>
         <Modal.Header closeButton>
           <Modal.Title>Configuracion</Modal.Title>
@@ -328,12 +338,40 @@ export const Team5 = () => {
         </Modal.Footer>
       </Modal>
 
+      <Modal show={showConvertPesos} onHide={() => {setShowConvertPesos(false);}}>
+        <Modal.Header closeButton>
+        <Modal.Title>Convertir Dolar a Pesos</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {dolarTitle}
+          {dolarOficial}<br/>
+          {dolarBlue}
+          <div className="boxInput">
+            <label htmlFor="campo5">Pesos</label>
+            <input type="number" id="campo5" value={convertPesos} onChange={(e) => setConvertPesos(e.target.value)} />
+          </div>
+          <h5>Conversión</h5>
+          <span>
+            {dolar.officialName}: Compra ${dolar.officialBuyPrice * convertPesos} - Venta ${dolar.officialSellPrice * convertPesos}
+          </span>
+          <br/>
+          <span>
+            {dolar.blueName}: Compra ${dolar.blueBuyPrice * convertPesos} - Venta ${dolar.blueSellPrice * convertPesos}
+          </span>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => {setShowConvertPesos(false);}}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Modal show={showMessage} onHide={() => {setShowMessage(false); setMessage('');}}>
         <Modal.Header closeButton>
         <Modal.Title>Mensaje</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {message}
+         {message}
         </Modal.Body>
       </Modal>
     </div>
