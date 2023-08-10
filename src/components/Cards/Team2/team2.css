@@ -1,0 +1,76 @@
+.title {
+    text-align: center;
+}
+
+.searcher {
+    text-align: center;
+}
+
+.peliculas {
+    background-color: rgb(250, 132, 148);
+    border: 1px solid rgb(253, 108, 127);
+    border-radius: 1%;
+    padding: 2%;
+    text-align: center;
+}
+
+.pelicula {
+
+    border: 1px solid rgb(245, 54, 79);
+    margin: 1%;
+    padding: 2%;
+    border-radius: 1%;
+    background-color: rgb(238, 91, 110);
+    /* color: black; */
+    font-weight: bolder;
+}
+
+.pelicula:hover {
+    background-color: rgb(233, 34, 60);
+}
+
+
+.searcher input {
+    margin: 2%;
+    padding: 1%;
+    text-align: center;
+    border: 1px solid #000000;
+    border-radius: 5%;
+    background-color: rgba(250, 247, 247, 0.932);
+}
+
+.searcher button {
+    margin: 2%;
+    border-radius: 10%;
+    background-color: brown;
+    border: 1px solid #000000;
+    padding: 2%;
+    color: white;
+}
+
+.searcher button:hover {
+    margin: 2%;
+    border-radius: 10%;
+    background-color: rgb(238, 91, 110);
+    border: 1px solid #000000;
+    padding: 2%;
+    color: white;
+}
+
+/* Detail Box */
+
+.detail-box {
+    background-color: rgba(255, 255, 255, 0.726);
+    margin: 1%;
+    padding: 2%;
+}
+
+.detail-box .title {
+    font-weight: bolder;
+}
+
+.detail-box .description {
+    font-style: oblique;
+    font-weight: 400;
+    margin-top: 2%;
+}
